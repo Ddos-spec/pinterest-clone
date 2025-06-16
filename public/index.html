@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinterest Clone</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+        
+        .header {
+            background: white;
+            padding: 16px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e60023;
+        }
+        
+        .auth-section {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #e60023;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #d50e2d;
+        }
+        
+        .btn-secondary {
+            background: #f1f1f1;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e1e1e1;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        
+        .masonry-grid {
+            column-count: 4;
+            column-gap: 16px;
+            margin-top: 24px;
+        }
+        
+        @media (max-width: 1024px) {
+            .masonry-grid {
+                column-count: 3;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .masonry-grid {
+                column-count: 2;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .masonry-grid {
+                column-count: 1;
+            }
+        }
+        
+        .pin {
+            break-inside: avoid;
+            margin-bottom: 16px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            position: relative;
+        }
+        
+        .pin:hover {
+            transform: translateY(-2px);
+        }
+        
+        .pin img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .pin-content {
+            padding: 16px;
+        }
+        
+        .pin-description {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .delete-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .pin:hover .delete-btn {
+            opacity: 1;
+        }
+        
+        .add-pin-form {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #e60023;
+        }
+        
+        .placeholder-image {
+            width: 100%;
+            height: 200px;
+            background: #f1f1f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            color: #e60023;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    
+    <script>
+        const { useState, useEffect } = React;
+        
+        // Utility function to check if image is broken
+        const checkImageExists = (url) => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                img.src = url;
+            });
+        };
+        
+        // Pin component
+        const Pin = ({ pin, onDelete, showDelete = false }) => {
+            const [imageExists, setImageExists] = useState(true);
+            const [imageLoaded, setImageLoaded] = useState(false);
+            
+            useEffect(() => {
+                checkImageExists(pin.imageUrl).then(exists => {
+                    setImageExists(exists);
+                    setImageLoaded(true);
+                });
+            }, [pin.imageUrl]);
+            
+            const handleDelete = () => {
+                if (window.confirm('Are you sure you want to delete this pin?')) {
+                    onDelete(pin._id);
+                }
+            };
+            
+            return React.createElement('div', { className: 'pin' },
+                showDelete && React.createElement('button', {
+                    className: 'delete-btn',
+                    onClick: handleDelete,
+                    title: 'Delete pin'
+                }, '×'),
+                
+                !imageLoaded ? 
+                    React.createElement('div', { className: 'placeholder-image' }, 'Loading...') :
+                    imageExists ? 
+                        React.createElement('img', {
+                            src: pin.imageUrl,
+                            alt: pin.description || 'Pin image',
+                            onError: () => setImageExists(false)
+                        }) :
+                        React.createElement('div', { className: 'placeholder-image' }, 'Image not available'),
+                
+                pin.description && React.createElement('div', { className: 'pin-content' },
+                    React.createElement('div', { className: 'pin-description' }, pin.description)
+                )
+            );
+        };
+        
+        // Add Pin Form component
+        const AddPinForm = ({ onAddPin }) => {
+            const [imageUrl, setImageUrl] = useState('');
+            const [description, setDescription] = useState('');
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                if (!imageUrl.trim()) return;
+                
+                setIsSubmitting(true);
+                try {
+                    await onAddPin({
+                        imageUrl: imageUrl.trim(),
+                        description: description.trim()
+                    });
+                    setImageUrl('');
+                    setDescription('');
+                } catch (error) {
+                    alert('Failed to add pin');
+                } finally {
+                    setIsSubmitting(false);
+                }
+            };
+            
+            return React.createElement('form', { className: 'add-pin-form', onSubmit: handleSubmit },
+                React.createElement('h3', null, 'Add New Pin'),
+                React.createElement('div', { className: 'form-group' },
+                    React.createElement('label', null, 'Image URL'),
+                    React.createElement('input', {
+                        type: 'url',
+                        value: imageUrl,
+                        onChange: (e) => setImageUrl(e.target.value),
+                        placeholder: 'Enter image URL',
+                        required: true
+                    })
+                ),
+                React.createElement('div', { className: 'form-group' },
+                    React.createElement('label', null, 'Description (optional)'),
+                    React.createElement('textarea', {
+                        value: description,
+                        onChange: (e) => setDescription(e.target.value),
+                        placeholder: 'Enter description',
+                        rows: 3
+                    })
+                ),
+                React.createElement('button', {
+                    type: 'submit',
+                    className: 'btn btn-primary',
+                    disabled: isSubmitting
+                }, isSubmitting ? 'Adding...' : 'Add Pin')
+            );
+        };
+        
+        // Main App component
+        const App = () => {
+            const [user, setUser] = useState(null);
+            const [pins, setPins] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState('');
+            const [viewingUser, setViewingUser] = useState(null);
+            
+            useEffect(() => {
+                checkAuth();
+                checkUserFromPath();
+            }, []);
+            
+            const checkAuth = async () => {
+                try {
+                    const response = await axios.get('/api/user');
+                    setUser(response.data);
+                    loadUserPins();
+                } catch (error) {
+                    setUser(null);
+                    setLoading(false);
+                }
+            };
+            
+            const checkUserFromPath = () => {
+                const path = window.location.pathname;
+                const match = path.match(/^\/users\/(.+)$/);
+                if (match) {
+                    const username = match[1];
+                    loadPublicUserPins(username);
+                }
+            };
+            
+            const loadUserPins = async () => {
+                try {
+                    const response = await axios.get('/api/pins');
+                    setPins(response.data);
+                } catch (error) {
+                    setError('Failed to load pins');
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            const loadPublicUserPins = async (username) => {
+                try {
+                    const response = await axios.get(`/api/users/${username}/pins`);
+                    setViewingUser(response.data.user);
+                    setPins(response.data.pins);
+                } catch (error) {
+                    setError('User not found');
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            const handleAddPin = async (pinData) => {
+                const response = await axios.post('/api/pins', pinData);
+                setPins([response.data, ...pins]);
+            };
+            
+            const handleDeletePin = async (pinId) => {
+                try {
+                    await axios.delete(`/api/pins/${pinId}`);
+                    setPins(pins.filter(pin => pin._id !== pinId));
+                } catch (error) {
+                    alert('Failed to delete pin');
+                }
+            };
+            
+            const handleLogin = () => {
+                window.location.href = '/auth/github';
+            };
+            
+            const handleLogout = () => {
+                window.location.href = '/auth/logout';
+            };
+            
+            if (loading) {
+                return React.createElement('div', { className: 'loading' }, 'Loading...');
+            }
+            
+            return React.createElement('div', null,
+                // Header
+                React.createElement('header', { className: 'header' },
+                    React.createElement('div', { className: 'logo' }, 'Pinterest Clone'),
+                    React.createElement('div', { className: 'auth-section' },
+                        user ? [
+                            React.createElement('div', { key: 'user-info', className: 'user-info' },
+                                React.createElement('img', {
+                                    src: user.avatarUrl,
+                                    alt: user.displayName,
+                                    className: 'user-avatar'
+                                }),
+                                React.createElement('span', null, user.displayName)
+                            ),
+                            React.createElement('button', {
+                                key: 'logout',
+                                className: 'btn btn-secondary',
+                                onClick: handleLogout
+                            }, 'Logout')
+                        ] : React.createElement('button', {
+                            className: 'btn btn-primary',
+                            onClick: handleLogin
+                        }, 'Login with GitHub')
+                    )
+                ),
+                
+                // Main content
+                React.createElement('div', { className: 'container' },
+                    error && React.createElement('div', { className: 'error' }, error),
+                    
+                    viewingUser && React.createElement('div', { style: { marginBottom: '24px' } },
+                        React.createElement('h2', null, `${viewingUser.displayName}'s Pins`)
+                    ),
+                    
+                    user && !viewingUser && React.createElement(AddPinForm, { onAddPin: handleAddPin }),
+                    
+                    React.createElement('div', { className: 'masonry-grid' },
+                        pins.map(pin => React.createElement(Pin, {
+                            key: pin._id,
+                            pin: pin,
+                            onDelete: handleDeletePin,
+                            showDelete: user && !viewingUser
+                        }))
+                    ),
+                    
+                    pins.length === 0 && !error && React.createElement('div', {
+                        style: { textAlign: 'center', padding: '40px', color: '#666' }
+                    }, user && !viewingUser ? 'No pins yet. Add your first pin above!' : 'No pins found.')
+                )
+            );
+        };
+        
+        // Render the app
+        ReactDOM.render(React.createElement(App), document.getElementById('root'));
+    </script>
+</body>
+</html>
+
