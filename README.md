@@ -1,300 +1,329 @@
-
 # Pinterest Clone
 
-A fully functional Pinterest clone built from scratch with modern web technologies, featuring user authentication, image linking and storage, a Pinterest-style masonry grid, and comprehensive testing.
+A full-stack Pinterest clone built with Node.js, Express, MongoDB, and React. This application allows users to browse images, authenticate with GitHub, and manage their own image collections.
 
 ## Features
 
-- **GitHub OAuth Authentication**: Secure login with GitHub accounts
-- **Image Linking & Storage**: Pin images from any URL with MongoDB storage
-- **User-Specific Deletion**: Users can only delete their own pins
-- **Pinterest-Style Masonry Grid**: Responsive grid layout that adapts to all screen sizes
-- **Public User Walls**: Browse other users' pins at `/users/:username`
-- **Broken Image Detection**: Automatic client-side detection with placeholder fallback
-- **Comprehensive Testing**: Full test suite covering authentication, pin management, and frontend functionality
-- **Modern Responsive Design**: Clean, mobile-friendly interface
+### For All Users (Unauthenticated)
+- Browse all users' image galleries
+- View images in a Pinterest-style masonry grid layout
+- Responsive design for desktop and mobile
+
+### For Authenticated Users
+- Login with GitHub OAuth
+- Add new images by URL
+- Delete their own images
+- Like/unlike images
+- View user profiles and individual galleries
+- Automatic placeholder for broken image URLs
 
 ## Tech Stack
 
-- **Backend**: Node.js, Express.js, MongoDB with Mongoose
-- **Frontend**: React (via CDN), vanilla JavaScript
-- **Authentication**: Passport.js with GitHub OAuth2
-- **Testing**: Jest, Supertest, MongoDB Memory Server
-- **Styling**: Modern CSS with responsive design
+### Backend
+- **Node.js** with Express.js
+- **MongoDB** with Mongoose ODM
+- **Passport.js** for GitHub OAuth authentication
+- **Express Session** for session management
+- **CORS** enabled for cross-origin requests
+
+### Frontend
+- **React** with modern hooks
+- **React Router** for client-side routing
+- **Tailwind CSS** for styling
+- **shadcn/ui** components for polished UI
+- **Masonry.js** for Pinterest-style grid layout
+- **Axios** for API communication
+- **Lucide React** for icons
+
+### Database
+- **MongoDB Atlas** (cloud-hosted)
+- User profiles with GitHub OAuth data
+- Image metadata with ownership and likes
+
+## Quick Start
+
+### Prerequisites
+- Node.js (v16 or higher)
+- npm or pnpm
+- GitHub OAuth App (for authentication)
+
+### Installation
+
+1. **Clone and install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Set up GitHub OAuth:**
+   - Go to GitHub Settings > Developer settings > OAuth Apps
+   - Create a new OAuth App with:
+     - Application name: Pinterest Clone
+     - Homepage URL: http://localhost:3000
+     - Authorization callback URL: http://localhost:5000/api/auth/github/callback
+   - Copy the Client ID and Client Secret
+
+3. **Configure environment variables:**
+   - Edit `server/.env` and update:
+     ```env
+     GITHUB_CLIENT_ID=your-github-client-id
+     GITHUB_CLIENT_SECRET=your-github-client-secret
+     SESSION_SECRET=your-super-secret-session-key
+     ```
+
+4. **Start the application:**
+   ```bash
+   npm run dev
+   ```
+
+   This will start both the backend server (port 5000) and frontend development server (port 3000).
+
+5. **Open your browser:**
+   - Navigate to http://localhost:3000
+   - Click "Login with GitHub" to authenticate
+   - Start adding and browsing images!
 
 ## Project Structure
 
 ```
 pinterest-clone/
-├── public/
-│   └── index.html          # Main frontend application
-├── src/
-│   └── server/
-│       └── server.js       # Express server with all routes
-├── tests/
-│   ├── api.test.js         # Backend API tests
-│   ├── frontend.test.js    # Frontend functionality tests
-│   └── setup.js           # Test configuration
-├── .env.example           # Environment variables template
-├── .gitignore
-├── package.json
-└── README.md
-```
-
-## Setup and Installation
-
-### Prerequisites
-
-- Node.js (v14 or higher)
-- MongoDB (local installation or MongoDB Atlas)
-- GitHub OAuth App (for authentication)
-
-### 1. Clone and Install
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd pinterest-clone
-
-# Install dependencies
-npm install
-```
-
-### 2. Environment Configuration
-
-Create a `.env` file based on `.env.example`:
-
-```bash
-cp .env.example .env
-```
-
-Configure the following environment variables:
-
-```env
-# MongoDB connection string
-MONGODB_URI=mongodb://localhost:27017/pinterest-clone
-
-# GitHub OAuth credentials (create at https://github.com/settings/applications/new)
-GITHUB_CLIENT_ID=your_github_client_id
-GITHUB_CLIENT_SECRET=your_github_client_secret
-GITHUB_CALLBACK_URL=http://localhost:3000/auth/github/callback
-
-# Session secret (generate a random string)
-SESSION_SECRET=your_random_session_secret
-
-# Server port
-PORT=3000
-```
-
-### 3. GitHub OAuth Setup
-
-1. Go to [GitHub Developer Settings](https://github.com/settings/applications/new)
-2. Create a new OAuth App with:
-   - **Application name**: Pinterest Clone
-   - **Homepage URL**: `http://localhost:3000`
-   - **Authorization callback URL**: `http://localhost:3000/auth/github/callback`
-3. Copy the Client ID and Client Secret to your `.env` file
-
-### 4. Database Setup
-
-**Option A: Local MongoDB**
-```bash
-# Install MongoDB locally and start the service
-mongod
-```
-
-**Option B: MongoDB Atlas**
-```bash
-# Use MongoDB Atlas connection string in MONGODB_URI
-# Example: mongodb+srv://username:password@cluster.mongodb.net/pinterest-clone
-```
-
-## Running the Application
-
-### Development Mode
-
-```bash
-# Start the development server
-npm run dev
-
-# The application will be available at http://localhost:3000
-```
-
-### Production Mode
-
-```bash
-# Build the application
-npm run build
-
-# Start the production server
-npm start
-```
-
-## Testing
-
-Run the comprehensive test suite:
-
-```bash
-# Run all tests
-npm test
-
-# Tests cover:
-# - GitHub OAuth authentication flow
-# - Pin creation, listing, and deletion
-# - Public user wall browsing
-# - Broken image detection and replacement
-# - Frontend user interactions
+├── package.json                 # Root package with scripts
+├── README.md                   # This file
+├── server/                     # Backend Express application
+│   ├── package.json           # Server dependencies
+│   ├── index.js               # Main server file
+│   ├── .env                   # Environment variables
+│   ├── config/
+│   │   └── passport.js        # Passport GitHub OAuth config
+│   ├── models/
+│   │   ├── User.js            # User model
+│   │   └── Image.js           # Image model
+│   └── routes/
+│       ├── auth.js            # Authentication routes
+│       ├── images.js          # Image CRUD routes
+│       └── users.js           # User profile routes
+└── client/                    # Frontend React application
+    ├── package.json           # Client dependencies
+    ├── index.html             # HTML entry point
+    ├── src/
+    │   ├── App.jsx            # Main App component
+    │   ├── App.css            # Global styles
+    │   └── components/
+    │       ├── Header.jsx     # Navigation header
+    │       ├── ImageGrid.jsx  # Masonry grid layout
+    │       ├── ImageCard.jsx  # Individual image cards
+    │       ├── AddImageModal.jsx # Add image form
+    │       ├── LoginPage.jsx  # Login page
+    │       └── UserProfile.jsx # User profile page
+    └── public/                # Static assets
 ```
 
 ## API Endpoints
 
 ### Authentication
-- `GET /auth/github` - Initiate GitHub OAuth
-- `GET /auth/github/callback` - GitHub OAuth callback
-- `GET /auth/logout` - Logout user
-- `GET /api/user` - Get current user info
+- `GET /api/auth/github` - Initiate GitHub OAuth
+- `GET /api/auth/github/callback` - GitHub OAuth callback
+- `POST /api/auth/logout` - Logout user
+- `GET /api/auth/status` - Check authentication status
 
-### Pin Management
-- `POST /api/pins` - Create new pin (authenticated)
-- `GET /api/pins` - Get user's pins (authenticated)
-- `DELETE /api/pins/:id` - Delete pin (authenticated, owner only)
+### Images
+- `GET /api/images` - Get all images (public)
+- `GET /api/images/user/:userId` - Get user's images
+- `POST /api/images` - Create new image (authenticated)
+- `DELETE /api/images/:id` - Delete image (owner only)
+- `POST /api/images/:id/like` - Toggle like (authenticated)
 
-### Public Routes
-- `GET /api/users/:username/pins` - Get public user pins
-- `GET /` - Serve main application
+### Users
+- `GET /api/users` - Get all users
+- `GET /api/users/:id` - Get user profile
+- `GET /api/users/username/:username` - Get user by username
 
-## Usage
+## Environment Variables
 
-### For Authenticated Users
+### Server (.env)
+```env
+# MongoDB Connection
+MONGODB_URI=mongodb+srv://seto:admin123@cluster0.uvphcu3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 
-1. **Login**: Click "Login with GitHub" to authenticate
-2. **Add Pins**: Use the form to add image URLs with optional descriptions
-3. **View Your Pins**: See all your pins in a masonry grid layout
-4. **Delete Pins**: Hover over your pins to see the delete button
-5. **Logout**: Click the logout button in the header
+# Session Secret
+SESSION_SECRET=your-super-secret-session-key
 
-### For Unauthenticated Users
+# GitHub OAuth
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+GITHUB_CALLBACK_URL=http://localhost:5000/api/auth/github/callback
 
-1. **Browse Public Walls**: Visit `/users/:username` to see any user's public pins
-2. **View Only**: Cannot add or delete pins without authentication
-
-## Deployment
-
-### Heroku Deployment
-
-1. **Prepare for Heroku**:
-```bash
-# Create Procfile
-echo "web: npm start" > Procfile
-
-# Ensure environment variables are set in Heroku dashboard
+# Server Configuration
+PORT=5000
+NODE_ENV=development
 ```
 
-2. **Deploy**:
-```bash
-# Create Heroku app
-heroku create your-pinterest-clone
+## Development
 
-# Set environment variables
-heroku config:set MONGODB_URI=your_mongodb_atlas_uri
-heroku config:set GITHUB_CLIENT_ID=your_github_client_id
-heroku config:set GITHUB_CLIENT_SECRET=your_github_client_secret
-heroku config:set GITHUB_CALLBACK_URL=https://your-app.herokuapp.com/auth/github/callback
-heroku config:set SESSION_SECRET=your_session_secret
+### Available Scripts
 
-# Deploy
-git push heroku main
-```
+From the root directory:
+- `npm install` - Install all dependencies (server + client)
+- `npm run dev` - Start both server and client in development mode
+- `npm run server` - Start only the backend server
+- `npm run client` - Start only the frontend client
+- `npm run build` - Build the client for production
+- `npm start` - Start the production server
 
-### Vercel Deployment
+### Development Workflow
 
-1. **Install Vercel CLI**:
-```bash
-npm i -g vercel
-```
+1. **Backend Development:**
+   ```bash
+   cd server
+   npm run dev  # Uses nodemon for auto-restart
+   ```
 
-2. **Deploy**:
-```bash
-vercel --prod
-```
+2. **Frontend Development:**
+   ```bash
+   cd client
+   pnpm run dev  # Uses Vite for fast HMR
+   ```
 
-3. **Configure Environment Variables** in Vercel dashboard
+3. **Full Stack Development:**
+   ```bash
+   npm run dev  # Runs both concurrently
+   ```
 
-## Package for Distribution
+## Features Implementation
 
-Create a ZIP file for easy sharing:
+### Image Upload
+- Users can add images by providing a URL
+- Client-side validation for URL format
+- Server-side validation with express-validator
+- Automatic fallback to placeholder for broken images
 
-```bash
-npm run package
-```
+### Masonry Grid Layout
+- Uses Masonry.js for Pinterest-style layout
+- Responsive columns based on screen size
+- Lazy loading for better performance
+- Smooth animations and hover effects
 
-This creates `pinterest-clone.zip` with all source files (excluding node_modules).
+### Authentication Flow
+1. User clicks "Login with GitHub"
+2. Redirected to GitHub OAuth
+3. GitHub redirects back with authorization code
+4. Server exchanges code for user data
+5. User session created and stored
+6. Frontend receives authentication status
 
-## Features in Detail
+### User Experience
+- Clean, minimal design inspired by Pinterest
+- Responsive layout for all screen sizes
+- Loading states and error handling
+- Confirmation dialogs for destructive actions
+- Toast notifications for user feedback
 
-### Broken Image Handling
+## Database Schema
 
-The application automatically detects broken image links using JavaScript:
-
+### User Model
 ```javascript
-const checkImageExists = (url) => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(true);
-    img.onerror = () => resolve(false);
-    img.src = url;
-  });
-};
+{
+  githubId: String (unique),
+  username: String,
+  displayName: String,
+  profileUrl: String,
+  avatarUrl: String,
+  email: String,
+  createdAt: Date,
+  updatedAt: Date
+}
 ```
 
-Broken images are replaced with a placeholder showing "Image not available".
+### Image Model
+```javascript
+{
+  url: String,
+  title: String,
+  description: String,
+  owner: ObjectId (ref: User),
+  ownerName: String,
+  likes: [ObjectId] (ref: User),
+  likesCount: Number,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
 
-### Responsive Masonry Grid
+## Security Features
 
-The CSS-based masonry layout adapts to different screen sizes:
+- CORS configured for specific origins
+- Session-based authentication
+- CSRF protection through SameSite cookies
+- Input validation and sanitization
+- MongoDB injection protection via Mongoose
+- Secure session configuration
 
-- **Desktop**: 4 columns
-- **Tablet**: 3 columns  
-- **Mobile**: 2 columns
-- **Small Mobile**: 1 column
+## Performance Optimizations
 
-### Security Features
+- Image lazy loading
+- Pagination for large image sets
+- Efficient MongoDB queries with indexes
+- Optimized bundle size with Vite
+- CSS-in-JS with Tailwind for minimal CSS
 
-- **Session Management**: Secure session handling with express-session
-- **CORS Protection**: Configured for cross-origin requests
-- **Authentication Middleware**: Protected routes require authentication
-- **Ownership Validation**: Users can only delete their own pins
+## Browser Support
 
-## Troubleshooting
-
-### Common Issues
-
-1. **MongoDB Connection Error**:
-   - Ensure MongoDB is running locally or Atlas connection string is correct
-   - Check firewall settings for MongoDB Atlas
-
-2. **GitHub OAuth Error**:
-   - Verify GitHub OAuth app settings match your callback URL
-   - Ensure Client ID and Secret are correctly set in environment variables
-
-3. **Port Already in Use**:
-   - Change the PORT environment variable
-   - Kill existing processes: `lsof -ti:3000 | xargs kill -9`
-
-4. **Images Not Loading**:
-   - Check CORS settings on image hosts
-   - Verify image URLs are publicly accessible
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+- Mobile browsers (iOS Safari, Chrome Mobile)
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Run tests: `npm test`
+4. Test thoroughly
 5. Submit a pull request
 
 ## License
 
-ISC License - feel free to use this project for learning and development purposes.
+MIT License - feel free to use this project for learning or as a starting point for your own applications.
 
+## Troubleshooting
+
+### Common Issues
+
+1. **MongoDB Connection Error:**
+   - Verify the MONGODB_URI in server/.env
+   - Check network connectivity
+   - Ensure MongoDB Atlas allows connections from your IP
+
+2. **GitHub OAuth Not Working:**
+   - Verify GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET
+   - Check OAuth app callback URL matches exactly
+   - Ensure OAuth app is not suspended
+
+3. **CORS Errors:**
+   - Verify frontend is running on http://localhost:3000
+   - Check CORS configuration in server/index.js
+   - Clear browser cache and cookies
+
+4. **Images Not Loading:**
+   - Check if image URLs are accessible
+   - Verify CORS headers from image sources
+   - Test with different image URLs
+
+### Development Tips
+
+- Use browser developer tools to debug API calls
+- Check server logs for backend errors
+- Use React Developer Tools for component debugging
+- Monitor network tab for failed requests
+
+## Future Enhancements
+
+- Image upload from local files
+- Image categories and tags
+- Search functionality
+- User following system
+- Email notifications
+- Image compression and optimization
+- Progressive Web App (PWA) features
+- Dark mode support
 
